@@ -2,30 +2,30 @@ import express from "express";
 import fs from "fs";
 import path from "path";
 import OpenAI from "openai";
-import axios from"axios";
-import multer from 'multer';
-import bodyParser from 'body-parser'; 
+import axios from "axios";
+import multer from "multer";
+import bodyParser from "body-parser";
 
 const app = express();
 app.use(bodyParser.json());
 
 const port = 3000;
-const constant={
-    CHAT_GPT:"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",
-    LLAMA_KEY:"mCBkyECy6J1iUNsYHXvyv1LS2AFVeDCG"
-}
+const constant = {
+  CHAT_GPT: "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",
+  LLAMA_KEY: "mCBkyECy6J1iUNsYHXvyv1LS2AFVeDCG",
+};
 const openai = new OpenAI({
-  apiKey:  constant.CHAT_GPT,
+  apiKey: constant.CHAT_GPT,
 });
 var options = {
-    method: "POST",
-    headers: {
-      Accept: "*/*",
-      "User-Agent": "Thunder Client (https://www.thunderclient.com)",
-      Authorization: `Bearer ${constant.LLAMA_KEY}`,
-      "Content-Type": "application/json",
-    },
-  };
+  method: "POST",
+  headers: {
+    Accept: "*/*",
+    "User-Agent": "Thunder Client (https://www.thunderclient.com)",
+    Authorization: `Bearer ${constant.LLAMA_KEY}`,
+    "Content-Type": "application/json",
+  },
+};
 
 // Set up multer for handling file uploads
 const storage = multer.memoryStorage(); // You can change this to disk storage if needed
@@ -50,7 +50,7 @@ app.post("/text-to-voice", async (req, res) => {
     res.status(500).send("Internal Server Error");
   }
 });
-app.post("/summery", async (req,res) => {
+app.post("/summery", async (req, res) => {
   try {
     const { text } = req.body;
 
@@ -72,7 +72,7 @@ app.post("/summery", async (req,res) => {
   }
 });
 
-app.post("/text", async (req,res) => {
+app.post("/text", async (req, res) => {
   try {
     const { text } = req.body;
 
@@ -93,7 +93,7 @@ app.post("/text", async (req,res) => {
   }
 });
 
-app.post("/voice-to-text", upload.single('mp3file'),async (req,res) => {
+app.post("/voice-to-text", upload.single("mp3file"), async (req, res) => {
   try {
     const buffer = req.file.buffer;
     const translation = await openai.audio.translations.create({
@@ -110,28 +110,24 @@ app.post("/voice-to-text", upload.single('mp3file'),async (req,res) => {
 
 // with llama
 
-app.post('/llama-chat', (req,res)=> {
+app.post("/llama-chat", async (req, res) => {
+  try {
     const { text } = req.body;
-
-  options = {
-    ...options,
-    url: "https://api.deepinfra.com/v1/inference/meta-llama/Llama-2-70b-chat-hf",
-   data: {
-    text  
-    },
-  };
-  axios
-    .request(options)
-    .then(function (response) {
-      res.send(response.data);
-    })
-    .catch(function (error) {
-        console.log(error,"==error")
-      res.send(error.response.data);
-    });
-})
+    options = {
+      ...options,
+      url: "https://api.deepinfra.com/v1/inference/meta-llama/Llama-2-70b-chat-hf",
+      data: {
+        input: text,
+      },
+    };
+    const result = await axios.request(options);
+    res.send(result.data.results);
+  } catch (error) {
+    res.send(error.response.data);
+  }
+});
 
 // Start the Express server
 app.listen(port, () => {
-    console.log(`API listening at http://localhost:${port}`);
-  });
+  console.log(`API listening at http://localhost:${port}`);
+});
